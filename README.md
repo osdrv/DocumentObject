@@ -19,23 +19,18 @@
     class MyDocumentObject extends DocumentObject {
       public MyDocumentObject( PApplet p ) {
         super( p );
-        this.setWidth( 50 );
-        this.setHeight( 50 );
-        this.setPosX( 10 );
-        this.setPosY( 10 );
+        this.setDim( 50, 50 );
+        this.setPos( 10, 10 );
       }
   
       void render() {
-        getApplet().rect( 
-          this.getPosX(),
-          this.getPosY(),
-          this.getWidth(),
-          this.getHeight()
+        getApplet().rect( this.getPosX(), this.getPosY(),
+          this.getWidth(), this.getHeight()
         );
         super.render();
       }
   
       void onMouseClick( MouseEvent e ) {
-        println( "click!" );
+        println( "child element captured click!" );
       }
     }
