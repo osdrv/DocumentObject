@@ -183,19 +183,18 @@ public class DocumentObject extends Observable implements Observer,
 			this.animation_timer = new Timer();
 		}
 		int fps = 60;
-		if ( start == end) {
-			return;
-		}
 		final double step = (( end - start ) / ( (float)duration * (float)fps / 1000.0 ));
 		int outstanding = 0;
 		int fps_step = Math.round( 1000 / fps );
 		float current_pos = start;
 		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_START_MASK,
 				current_pos, outstanding );
-		while( Math.abs( current_pos - end ) >= Math.abs( step ) ) {
-			current_pos += step;
-			outstanding += fps_step;
-			scheduleAnimationTask( event_type, current_pos, outstanding );
+		if ( Math.abs( start - end ) > Math.abs( step ) ) {
+			while( Math.abs( current_pos - end ) >= Math.abs( step ) ) {
+				current_pos += step;
+				outstanding += fps_step;
+				scheduleAnimationTask( event_type, current_pos, outstanding );
+			}
 		}
 		scheduleAnimationTask( event_type, end, fps_step + outstanding );
 		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_COMPLETE_MASK,
@@ -207,19 +206,18 @@ public class DocumentObject extends Observable implements Observer,
 			this.animation_timer = new Timer();
 		}
 		int fps = 60;
-		if ( start == end) {
-			return;
-		}
 		final int step = (int)Math.round( (( end - start ) / ( (float)duration * (float)fps / 1000.0 ) ) );
 		int outstanding = 0;
 		int fps_step = Math.round( 1000 / fps );
 		int current_pos = start;
 		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_START_MASK,
 				current_pos, outstanding );
-		while( Math.abs( current_pos - end ) >= Math.abs( step ) ) {
-			current_pos += step;
-			outstanding += fps_step;
-			scheduleAnimationTask( event_type, current_pos, outstanding );
+		if ( Math.abs( start - end ) > Math.abs( step ) && step != 0 ) {
+			while( Math.abs( current_pos - end ) >= Math.abs( step ) ) {
+				current_pos += step;
+				outstanding += fps_step;
+				scheduleAnimationTask( event_type, current_pos, outstanding );
+			}
 		}
 		scheduleAnimationTask( event_type, end, fps_step + outstanding );
 		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_COMPLETE_MASK,
