@@ -228,18 +228,20 @@ public class DocumentObject extends Observable implements Observer,
 	
 	protected void scheduleAnimationTask( final String event_type,
 			final float val, int delay ) {
+		final DocumentObject self = this;
 		this.animation_timer.schedule( new TimerTask() {
 			public void run() {
-				captureEvent( new AnimationEvent<Float>( this, event_type, val ) );
+				captureEvent( new AnimationEvent<Float>( self, event_type, val ) );
 			}
 		}, delay );
 	}
 	
 	protected void scheduleAnimationTask( final String event_type,
 			final int val, int delay ) {
+		final DocumentObject self = this;
 		this.animation_timer.schedule( new TimerTask() {
 			public void run() {
-				handle( new AnimationEvent<Integer>( this, event_type, val ) );
+				captureEvent( new AnimationEvent<Integer>( self, event_type, val ) );
 			}
 		}, delay );
 	}
@@ -295,7 +297,6 @@ public class DocumentObject extends Observable implements Observer,
 			}
 		}
 		if ( captured != 0 ) {
-//			getApplet().println( String.format( "last captured: %s", toString() ) );
 			this.bubbleEvent( e );
 		}
 		return captured;
