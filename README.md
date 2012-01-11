@@ -30,7 +30,7 @@
         super.render();
       }
   
-      void onMouseClick( MouseEvent e ) {
+      void onMouseClick( CatchableMouseEvent e ) {
         println( "child element captured click!" );
       }
     }
