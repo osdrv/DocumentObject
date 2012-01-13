@@ -38,11 +38,9 @@ public class DocumentObject extends Observable implements Observer,
 	}
 	
 	public void render() {
-		eachChildDo( new Lambda<DocumentObject>() {
-			public void run( DocumentObject child ) {
-				child.render();
-			}
-		} );
+		for ( int i = 0; i < children.size(); ++i ) {
+			children.get( i ).render();
+		}
 	}
 
 	public void eachChildDo( Lambda<DocumentObject> block ) {
@@ -106,11 +104,9 @@ public class DocumentObject extends Observable implements Observer,
 	public void setZIndex( int z_index) {
 		this.z_index = z_index;
 		final int child_z_index = 1 + z_index;
-		eachChildDo( new Lambda<DocumentObject>() {
-			public void run( DocumentObject child ) {
-				child.setZIndex( 1 + child_z_index );
-			}
-		});
+		for ( int i = 0; i < children.size(); ++i ) {
+			children.get( i ).setZIndex( 1 + child_z_index );
+		}
 	}
 
 	public void update( Observable observable, Object arg ) {
@@ -176,6 +172,18 @@ public class DocumentObject extends Observable implements Observer,
 	public void setDim( int width, int height ) {
 		this.setWidth( width );
 		this.setHeight( height );
+	}
+	
+	public AnimationChain<Integer> animation_chain( int start, int end, int duration, Lambda<Integer> handler ) {
+		AnimationChain<Integer> ac = new AnimationChain<Integer>();
+		ac.queue( start, end, duration, handler );
+		return ac;
+	}
+	
+	public AnimationChain<Float> animation_chain( float start, float end, int duration, Lambda<Float> handler ) {
+		AnimationChain<Float> ac = new AnimationChain<Float>();
+		ac.queue( start, end, duration, handler );
+		return ac;
 	}
 	
 	public void animate( final String event_type, float start, float end, int duration ) {

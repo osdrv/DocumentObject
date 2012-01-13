@@ -18,7 +18,6 @@ public class Window extends DocumentObject {
 	}
 	
 	public void mouseEvent( MouseEvent e ) {
-//		getApplet().println( "window captured mouse event" );
 		this.captureEvent( new CatchableMouseEvent( e ) );
 	}
 	
