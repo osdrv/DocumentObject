@@ -260,10 +260,21 @@ public class DocumentObject extends Observable implements Observer,
 	}
 	
 	protected Boolean intersectMouse( MouseEvent me ) {
-		return ( me.getX() > getPosX() && 
+		Boolean res = ( me.getX() > getPosX() && 
 				me.getY() > getPosY() && 
 				me.getX() < ( getPosX() + this.getWidth() ) && 
 				me.getY() < ( getPosY() + getHeight() ) );
+		return ( res || intersectAnyChild( me ) );
+//		return res;
+	}
+	
+	protected Boolean intersectAnyChild( MouseEvent me ) {
+		for ( int i = 0; i < children.size(); ++i ) {
+			if ( children.get( i ).intersectMouse( me ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	protected void onMouseMove( CatchableMouseEvent e ) {}
@@ -313,12 +324,14 @@ public class DocumentObject extends Observable implements Observer,
 		this.handle( e );
 		if ( this.hasParent()) {
 			if ( e instanceof Catchable ) {
-				 if ( ( (Catchable)e ).isStopped() ) {
-					 return bubbled;
-				 } 
+				if ( ( (Catchable)e ).isStopped() ) {
+					return bubbled;
+				}
 			}
-			bubbled = 0; 
-			this.parent.bubbleEvent( e );
+			bubbled = 0;
+			if ( this.parent.intersect( e ) ) {
+				this.parent.bubbleEvent( e );
+			}
 		}
 		return bubbled;
 	}
