@@ -42,6 +42,10 @@ public class DocumentObject extends Observable implements Observer,
 			children.get( i ).render();
 		}
 	}
+	
+	public void draw() {
+		render();
+	}
 
 	public void eachChildDo( Lambda<DocumentObject> block ) {
 		for ( int i = 0; i < getChildren().size(); ++i ) {
@@ -334,5 +338,135 @@ public class DocumentObject extends Observable implements Observer,
 			}
 		}
 		return bubbled;
+	}
+	
+	protected void withTranslate( float tx, float ty, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.translate( tx, ty );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+	
+	protected void withTranslate( float tx, float ty, float tz, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.translate( tx, ty, tz );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+	
+	public void withRotate( float angle, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.rotate( angle );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withRotateX( float angle, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.rotateX( angle );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withRotateY( float angle, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.rotateY( angle );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withRotateZ( float angle, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.rotateZ( angle );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withRotate( float angle, float vx, float vy, float vz, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.rotate( angle, vx, vy, vz );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withScale( float s, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.scale( s );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withScale( float sx, float sy, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.scale( sx, sy );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withScale( float sx, float sy, float sz, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.pushMatrix();
+		applet.scale( sx, sy, sz );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withShearX( float angle, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.shearX( angle );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withShearY( float angle, Runnable scope_runner ) {
+		applet.pushMatrix();
+		applet.shearY( angle );
+		scope_runner.run();
+		applet.popMatrix();
+	}
+
+	public void withRectMode( int mode, Runnable scope_runner ) {
+		final int current_mode = applet.g.rectMode;
+		applet.rectMode( mode );
+		scope_runner.run();
+		applet.rectMode( current_mode );
+	}
+
+	public void withEllipseMode( int mode, Runnable scope_runner ) {
+		final int current_mode = applet.g.ellipseMode;
+		applet.ellipseMode( mode );
+		scope_runner.run();
+		applet.ellipseMode( current_mode );
+	}
+
+	public void withTextFont( PFont font, float size, Runnable scope_runner ) {
+		final PFont current_font = applet.g.textFont;
+		final float current_text_size = applet.g.textSize;
+		applet.textFont( font, size );
+		scope_runner.run();
+		if ( current_font != null )
+			applet.textFont( current_font, current_text_size );
+	}
+
+	public void withTextFont( PFont font, Runnable scope_runner ) {
+		final PFont current_font = applet.g.textFont;
+		applet.textFont( font );
+		scope_runner.run();
+		if ( current_font != null )
+			applet.textFont( current_font );
+	}
+
+	public void withShapeMode( int mode, Runnable scope_runner ) {
+		final int current_mode = applet.g.shapeMode;
+		applet.shapeMode( mode );
+		scope_runner.run();
+		applet.shapeMode( current_mode );
+	}
+
+	public void withImageMode( int mode, Runnable scope_runner ) {
+		final int current_mode = applet.g.imageMode;
+		applet.imageMode( mode );
+		scope_runner.run();
+		applet.imageMode( current_mode );
 	}
 }
