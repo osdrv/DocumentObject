@@ -1,6 +1,7 @@
 package document_object;
 
 import java.awt.AWTEvent;
+import java.awt.Component;
 import java.awt.event.*;
 import java.util.Observable;
 import java.util.Observer;
@@ -19,6 +20,7 @@ public class DocumentObject extends Observable implements Observer,
 	protected int height = 0;
 	protected int pos_x = 0;
 	protected int pos_y = 0;
+	protected float scale = (float) 1.0;
 	protected int z_index = 0;
 	protected ArrayList<DocumentObject> children;
 	protected DocumentObject parent = null;
@@ -37,19 +39,29 @@ public class DocumentObject extends Observable implements Observer,
 		this.applet = applet;
 	}
 	
-	public void render() {
-		for ( int i = 0; i < children.size(); ++i ) {
-			children.get( i ).render();
-		}
+	public void draw() {
+		withModifiers( new Runnable() { public void run() {
+			render();
+			for ( DocumentObject child : children ) {
+				child.draw();
+			}
+		} } );
 	}
 	
-	public void draw() {
-		render();
-	}
+	protected void render() {}
 
+	protected void withModifiers( Runnable scope_runner ) {
+		final Runnable _scope_runner = scope_runner;
+		withScale( this.scale, new Runnable() { public void run() {
+			withTranslate( getPosX(), getPosY(), new Runnable() { public void run() {
+				_scope_runner.run();
+			} } );
+		} } );
+	}
+	
 	public void eachChildDo( Lambda<DocumentObject> block ) {
-		for ( int i = 0; i < getChildren().size(); ++i ) {
-			block.run( getChildren().get( i ) );
+		for ( DocumentObject child : children ) {
+			block.run( child );
 		}
 	}
 
@@ -113,6 +125,10 @@ public class DocumentObject extends Observable implements Observer,
 		}
 	}
 
+	public void setScale( float scale ) {
+		this.scale = scale;
+	}
+	
 	public void update( Observable observable, Object arg ) {
 		if ( arg instanceof AWTEvent ) {
 			AWTEvent e = (AWTEvent)arg;
@@ -264,17 +280,25 @@ public class DocumentObject extends Observable implements Observer,
 	}
 	
 	protected Boolean intersectMouse( MouseEvent me ) {
-		Boolean res = ( me.getX() > getPosX() && 
-				me.getY() > getPosY() && 
-				me.getX() < ( getPosX() + this.getWidth() ) && 
-				me.getY() < ( getPosY() + getHeight() ) );
-		return ( res || intersectAnyChild( me ) );
-//		return res;
+		
+		MouseEvent scaled_event = new MouseEvent( (Component)me.getSource(), me.getID(), me.getWhen(), me.getModifiers(),
+				Math.round( me.getX() / scale ) - getPosX(), Math.round( me.getY() / scale ) - getPosY(), me.getXOnScreen(), me.getYOnScreen(), me.getClickCount(),
+				me.isPopupTrigger(), me.getButton() );
+		
+		Boolean res = ( scaled_event.getX() > getPosX() && 
+				scaled_event.getY() > getPosY() && 
+				scaled_event.getX() < ( getPosX() + this.getWidth() ) && 
+				scaled_event.getY() < ( getPosY() + getHeight() ) );
+		return ( res || intersectAnyChild( scaled_event ) );
 	}
 	
-	protected Boolean intersectAnyChild( MouseEvent me ) {
+	protected Boolean intersectAnyChild( MouseEvent e ) {
+		MouseEvent translated_event = new MouseEvent( (Component)e.getSource(), e.getID(), e.getWhen(), e.getModifiers(),
+				e.getX() - getPosX(), e.getY() - getPosY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(),
+				e.isPopupTrigger(), e.getButton() );
+		
 		for ( int i = 0; i < children.size(); ++i ) {
-			if ( children.get( i ).intersectMouse( me ) ) {
+			if ( children.get( i ).intersectMouse( translated_event ) ) {
 				return true;
 			}
 		}
@@ -309,16 +333,24 @@ public class DocumentObject extends Observable implements Observer,
 
 	protected int captureEvent( AWTEvent e ) {
 		int captured = -1;
+		AWTEvent _e = e;
+		if ( e instanceof MouseEvent ) {
+			MouseEvent me = (MouseEvent)e;
+			CatchableMouseEvent scaled_event = new CatchableMouseEvent( (Component)me.getSource(), me.getID(), me.getWhen(), me.getModifiers(),
+					Math.round( me.getX() / scale ) - getPosX(), Math.round( me.getY() / scale ) - getPosY(), me.getXOnScreen(), me.getYOnScreen(), me.getClickCount(),
+					me.isPopupTrigger(), me.getButton() );
+			_e = scaled_event;
+		}
 		if ( this.children.size() > 0 ) {
-			for ( int i = 0; i < children.size(); ++i ) {
-				if ( children.get( i ).intersect( e ) ) {
+			for ( DocumentObject child : children ) {
+				if ( child.intersect( _e ) ) {
 					captured = 0;
-					children.get( i ).captureEvent( e );
+					child.captureEvent( _e );
 				}
 			}
 		}
 		if ( captured != 0 ) {
-			this.bubbleEvent( e );
+			this.bubbleEvent( _e );
 		}
 		return captured;
 	}
