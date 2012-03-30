@@ -281,15 +281,11 @@ public class DocumentObject extends Observable implements Observer,
 	
 	protected Boolean intersectMouse( MouseEvent me ) {
 		
-		MouseEvent scaled_event = new MouseEvent( (Component)me.getSource(), me.getID(), me.getWhen(), me.getModifiers(),
-				Math.round( me.getX() / scale ) - getPosX(), Math.round( me.getY() / scale ) - getPosY(), me.getXOnScreen(), me.getYOnScreen(), me.getClickCount(),
-				me.isPopupTrigger(), me.getButton() );
-		
-		Boolean res = ( scaled_event.getX() > getPosX() && 
-				scaled_event.getY() > getPosY() && 
-				scaled_event.getX() < ( getPosX() + this.getWidth() ) && 
-				scaled_event.getY() < ( getPosY() + getHeight() ) );
-		return ( res || intersectAnyChild( scaled_event ) );
+		Boolean res = ( me.getX() > getPosX() && 
+				me.getY() > getPosY() && 
+				me.getX() < ( getPosX() + this.getWidth() ) && 
+				me.getY() < ( getPosY() + getHeight() ) );
+		return ( res || intersectAnyChild( me ) );
 	}
 	
 	protected Boolean intersectAnyChild( MouseEvent e ) {
@@ -359,14 +355,22 @@ public class DocumentObject extends Observable implements Observer,
 		int bubbled = -1;
 		this.handle( e );
 		if ( this.hasParent()) {
-			if ( e instanceof Catchable ) {
-				if ( ( (Catchable)e ).isStopped() ) {
+			AWTEvent _e = e;
+			if ( _e instanceof MouseEvent ) {
+				MouseEvent me = (MouseEvent)e;
+				CatchableMouseEvent scaled_event = new CatchableMouseEvent( (Component)me.getSource(), me.getID(), me.getWhen(), me.getModifiers(),
+						Math.round( me.getX() * scale ) - getPosX(), Math.round( me.getY() * scale ) - getPosY(), me.getXOnScreen(), me.getYOnScreen(), me.getClickCount(),
+						me.isPopupTrigger(), me.getButton() );
+				_e = scaled_event;
+			}
+			if ( _e instanceof Catchable ) {
+				if ( ( (Catchable)_e ).isStopped() ) {
 					return bubbled;
 				}
 			}
 			bubbled = 0;
-			if ( this.parent.intersect( e ) ) {
-				this.parent.bubbleEvent( e );
+			if ( this.parent.intersect( _e ) ) {
+				this.parent.bubbleEvent( _e );
 			}
 		}
 		return bubbled;

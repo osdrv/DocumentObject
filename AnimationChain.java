@@ -103,7 +103,9 @@ public class AnimationChain<T> implements Runnable {
 	}
 	
 	public void cancel() {
-		this.timer.cancel();
+		if ( this.timer != null )
+			this.timer.cancel();
+		this.stack.clear();
 		this.timer = new Timer();
 	}
 }
