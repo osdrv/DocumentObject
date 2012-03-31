@@ -10,6 +10,7 @@ public class AnimationChain<T> implements Runnable {
 	protected Timer timer = null;
 	protected AnimationChain<T> child = null;
 	protected final int fps = 60;
+	protected Runnable finalizer;
 	
 	public AnimationChain() {
 		this.stack = new ArrayList<AnimationStep<T>>();
@@ -27,6 +28,11 @@ public class AnimationChain<T> implements Runnable {
 		} else {
 			child.then(start, end, duration, handler);
 		}
+		return this;
+	}
+	
+	public AnimationChain<T> ensure( Runnable handler ) {
+		this.finalizer = handler;
 		return this;
 	}
 	
@@ -93,12 +99,21 @@ public class AnimationChain<T> implements Runnable {
 				}, outstanding + fps_step );
 			}
 		}
+		int sub_step = 2;
+		if ( this.finalizer != null ) {
+			this.timer.schedule( new TimerTask() {
+				public void run() {
+					finalizer.run();
+				}
+			}, outstanding + sub_step * fps_step );
+			++sub_step;
+		}
 		if ( this.child != null ) {
 			this.timer.schedule( new TimerTask() {
 				public void run() {
 					child.run();
 				}
-			}, outstanding + 2 * fps_step );
+			}, outstanding + sub_step * fps_step );
 		}
 	}
 	
