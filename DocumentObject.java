@@ -505,4 +505,25 @@ public class DocumentObject extends Observable implements Observer,
 		scope_runner.run();
 		applet.imageMode( current_mode );
 	}
+	
+	public void withStrokeJoin( int join, Runnable scope_runner ) {
+		final int current_join = applet.g.strokeJoin;
+		applet.strokeJoin( join );
+		scope_runner.run();
+		applet.strokeJoin( current_join );
+	}
+	
+	public void withStrokeWeight( float weight, Runnable scope_runner ) {
+		final float current_weight = applet.g.strokeWeight;
+		applet.strokeWeight( weight );
+		scope_runner.run();
+		applet.strokeWeight( current_weight );
+	}
+	
+	public void withStrokeCap( int cap, Runnable scope_runner ) {
+		final int current_cap = applet.g.strokeCap;
+		applet.strokeCap( cap );
+		scope_runner.run();
+		applet.strokeCap( current_cap );
+	}
 }
