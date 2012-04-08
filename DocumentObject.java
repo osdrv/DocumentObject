@@ -306,6 +306,9 @@ public class DocumentObject extends Observable implements Observer,
 	protected void onMouseUp( CatchableMouseEvent e ) {}
 	protected void onMouseDrag( CatchableMouseEvent e ) {}
 	protected void onMouseClick( CatchableMouseEvent e ) {}
+	protected void onKeyDown( KeyEvent e ) {}
+	protected void onKeyUp( KeyEvent e ) {}
+	protected void onKeyPress( KeyEvent e ) {}
 	
 	protected void handle( AWTEvent e ) {
 		switch ( e.getID() ) {
@@ -323,6 +326,15 @@ public class DocumentObject extends Observable implements Observer,
 			break;
 		case MouseEvent.MOUSE_MOVED:
 			this.onMouseMove( (CatchableMouseEvent)e );
+			break;
+		case KeyEvent.KEY_PRESSED:
+			this.onKeyDown( (KeyEvent)e );
+			break;
+		case KeyEvent.KEY_RELEASED:
+			this.onKeyUp( (KeyEvent)e );
+			break;
+		case KeyEvent.KEY_TYPED:
+			this.onKeyPress( (KeyEvent)e );
 			break;
 		}
 	}

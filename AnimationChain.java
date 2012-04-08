@@ -32,7 +32,12 @@ public class AnimationChain<T> implements Runnable {
 	}
 	
 	public AnimationChain<T> ensure( Runnable handler ) {
-		this.finalizer = handler;
+		if ( this.child == null ) {
+			this.finalizer = handler;
+		} else {
+			child.ensure( handler );
+		}
+		
 		return this;
 	}
 	
