@@ -1,4 +1,4 @@
-package document_object;
+package document_object.objects;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;

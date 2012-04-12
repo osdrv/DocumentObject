@@ -1,4 +1,4 @@
-package document_object;
+package document_object.objects;
 
 import java.awt.AWTEvent;
 import java.awt.Component;
@@ -6,10 +6,9 @@ import java.awt.event.*;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.lang.Math;
 
+import document_object.animation.*;
 import processing.core.*;
 
 public class DocumentObject extends Observable implements Observer,
@@ -24,8 +23,7 @@ public class DocumentObject extends Observable implements Observer,
 	protected int z_index = 0;
 	protected ArrayList<DocumentObject> children;
 	protected DocumentObject parent = null;
-	protected Timer animation_timer = null;
-
+	
 	public DocumentObject( PApplet p ) {
 		this.setApplet( p );
 		this.children = new ArrayList<DocumentObject>();
@@ -57,12 +55,6 @@ public class DocumentObject extends Observable implements Observer,
 		} } );
 	}
 	
-	public void eachChildDo( Lambda<DocumentObject> block ) {
-		for ( DocumentObject child : children ) {
-			block.run( child );
-		}
-	}
-
 	public void appendChild( DocumentObject child ) {
 		if ( !containsChild( child ) ) {
 			child.setParent( this );
@@ -192,89 +184,16 @@ public class DocumentObject extends Observable implements Observer,
 		this.setHeight( height );
 	}
 	
-	public AnimationChain<Integer> animation_chain( int start, int end, int duration, Lambda<Integer> handler ) {
+	public AnimationChain<Integer> animate( int start, int end, int duration, Lambda<Integer> handler ) {
 		AnimationChain<Integer> ac = new AnimationChain<Integer>();
 		ac.queue( start, end, duration, handler );
 		return ac;
 	}
 	
-	public AnimationChain<Float> animation_chain( float start, float end, int duration, Lambda<Float> handler ) {
+	public AnimationChain<Float> animate( float start, float end, int duration, Lambda<Float> handler ) {
 		AnimationChain<Float> ac = new AnimationChain<Float>();
 		ac.queue( start, end, duration, handler );
 		return ac;
-	}
-	
-	public void animate( final String event_type, float start, float end, int duration ) {
-		if ( this.animation_timer == null ) {
-			this.animation_timer = new Timer();
-		}
-		int fps = 60;
-		final double step = (( end - start ) / ( (float)duration * (float)fps / 1000.0 ));
-		int outstanding = 0;
-		int fps_step = Math.round( 1000 / fps );
-		float current_pos = start;
-		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_START_MASK,
-				current_pos, outstanding );
-		if ( Math.abs( start - end ) > Math.abs( step ) ) {
-			while( Math.abs( current_pos - end ) >= Math.abs( step ) ) {
-				current_pos += step;
-				outstanding += fps_step;
-				scheduleAnimationTask( event_type, current_pos, outstanding );
-			}
-		}
-		scheduleAnimationTask( event_type, end, fps_step + outstanding );
-		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_COMPLETE_MASK,
-				current_pos, 2 * fps_step + outstanding );
-	}
-	
-	public void animate( final String event_type, int start, int end, int duration ) {
-		if ( this.animation_timer == null ) {
-			this.animation_timer = new Timer();
-		}
-		int fps = 60;
-		final int step = (int)Math.round( (( end - start ) / ( (float)duration * (float)fps / 1000.0 ) ) );
-		int outstanding = 0;
-		int fps_step = Math.round( 1000 / fps );
-		int current_pos = start;
-		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_START_MASK,
-				current_pos, outstanding );
-		if ( Math.abs( start - end ) > Math.abs( step ) && step != 0 ) {
-			while( Math.abs( current_pos - end ) >= Math.abs( step ) ) {
-				current_pos += step;
-				outstanding += fps_step;
-				scheduleAnimationTask( event_type, current_pos, outstanding );
-			}
-		}
-		scheduleAnimationTask( event_type, end, fps_step + outstanding );
-		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_COMPLETE_MASK,
-				current_pos, 2 * fps_step + outstanding );
-	}
-	
-	protected void scheduleAnimationTask( final String event_type,
-			final float val, int delay ) {
-		final DocumentObject self = this;
-		this.animation_timer.schedule( new TimerTask() {
-			public void run() {
-				captureEvent( new AnimationEvent<Float>( self, event_type, val ) );
-			}
-		}, delay );
-	}
-	
-	protected void scheduleAnimationTask( final String event_type,
-			final int val, int delay ) {
-		final DocumentObject self = this;
-		this.animation_timer.schedule( new TimerTask() {
-			public void run() {
-				captureEvent( new AnimationEvent<Integer>( self, event_type, val ) );
-			}
-		}, delay );
-	}
-	
-	public void stopAnimation() {
-		if ( this.animation_timer != null ) {
-			this.animation_timer.cancel();
-			this.animation_timer = new Timer();
-		}
 	}
 	
 	protected Boolean intersectMouse( MouseEvent me ) {

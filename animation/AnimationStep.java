@@ -1,4 +1,4 @@
-package document_object;
+package document_object.animation;
 
 public class AnimationStep<T> {
 	protected T start;
