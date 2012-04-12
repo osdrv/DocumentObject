@@ -53,9 +53,7 @@ public class DocumentObject extends Observable implements Observer,
 	protected void withModifiers( Runnable scope_runner ) {
 		final Runnable _scope_runner = scope_runner;
 		withScale( this.scale, new Runnable() { public void run() {
-			withTranslate( getPosX(), getPosY(), new Runnable() { public void run() {
-				_scope_runner.run();
-			} } );
+			withTranslate( getPosX(), getPosY(), _scope_runner );
 		} } );
 	}
 	
