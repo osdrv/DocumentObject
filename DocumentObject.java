@@ -52,8 +52,9 @@ public class DocumentObject extends Observable implements Observer,
 
 	protected void withModifiers( Runnable scope_runner ) {
 		final Runnable _scope_runner = scope_runner;
-		withScale( this.scale, new Runnable() { public void run() {
-			withTranslate( getPosX(), getPosY(), _scope_runner );
+		final float current_scale = this.scale;
+		withTranslate( getPosX(), getPosY(), new Runnable() { public void run() {
+			withScale( current_scale, _scope_runner );
 		} } );
 	}
 	
@@ -125,6 +126,10 @@ public class DocumentObject extends Observable implements Observer,
 
 	public void setScale( float scale ) {
 		this.scale = scale;
+	}
+	
+	public float getScale() {
+		return this.scale;
 	}
 	
 	public void update( Observable observable, Object arg ) {
