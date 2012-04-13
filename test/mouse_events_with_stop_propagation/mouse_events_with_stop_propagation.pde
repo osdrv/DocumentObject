@@ -1,8 +1,10 @@
+import document_object.objects.*;
+import document_object.animation.*;
 import processing.opengl.*;
-import document_object.*;
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Canvas;
+
 
 TestWindow window;
 SquareObject sq1, sq2, sq3;

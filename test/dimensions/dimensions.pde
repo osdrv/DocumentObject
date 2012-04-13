@@ -1,5 +1,6 @@
+import document_object.objects.*;
+import document_object.animation.*;
 import processing.opengl.*;
-import document_object.*;
 
 Window window;
 SquareObject sq1, sq2;
