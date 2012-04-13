@@ -51,6 +51,7 @@ public void draw() {
       Math.round( sq1.getPosX() + sq1.getScale() * sq2.getPosX() + sq2.getWidth() * sq1.getScale() * sq2.getScale() - 1 ),
       Math.round( sq1.getPosY() + sq1.getScale() * sq2.getPosY() + sq2.getHeight() * sq1.getScale() * sq2.getScale() - 1 )
     ) == color( 0, 0, 255 ), "sq2(w, h) color is blue" );
+    background( 0, 255, 0 );
   } catch ( AssetException e ) {
     
   }

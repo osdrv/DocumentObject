@@ -24,7 +24,6 @@ public class DocumentObject extends Observable implements Observer,
 	protected int z_index = 0;
 	protected ArrayList<DocumentObject> children;
 	protected DocumentObject parent = null;
-	protected Timer animation_timer = null;
 
 	public DocumentObject( PApplet p ) {
 		this.setApplet( p );
@@ -209,95 +208,73 @@ public class DocumentObject extends Observable implements Observer,
 		return ac;
 	}
 	
-	public void animate( final String event_type, float start, float end, int duration ) {
-		if ( this.animation_timer == null ) {
-			this.animation_timer = new Timer();
-		}
-		int fps = 60;
-		final double step = (( end - start ) / ( (float)duration * (float)fps / 1000.0 ));
-		int outstanding = 0;
-		int fps_step = Math.round( 1000 / fps );
-		float current_pos = start;
-		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_START_MASK,
-				current_pos, outstanding );
-		if ( Math.abs( start - end ) > Math.abs( step ) ) {
-			while( Math.abs( current_pos - end ) >= Math.abs( step ) ) {
-				current_pos += step;
-				outstanding += fps_step;
-				scheduleAnimationTask( event_type, current_pos, outstanding );
-			}
-		}
-		scheduleAnimationTask( event_type, end, fps_step + outstanding );
-		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_COMPLETE_MASK,
-				current_pos, 2 * fps_step + outstanding );
-	}
-	
-	public void animate( final String event_type, int start, int end, int duration ) {
-		if ( this.animation_timer == null ) {
-			this.animation_timer = new Timer();
-		}
-		int fps = 60;
-		final int step = (int)Math.round( (( end - start ) / ( (float)duration * (float)fps / 1000.0 ) ) );
-		int outstanding = 0;
-		int fps_step = Math.round( 1000 / fps );
-		int current_pos = start;
-		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_START_MASK,
-				current_pos, outstanding );
-		if ( Math.abs( start - end ) > Math.abs( step ) && step != 0 ) {
-			while( Math.abs( current_pos - end ) >= Math.abs( step ) ) {
-				current_pos += step;
-				outstanding += fps_step;
-				scheduleAnimationTask( event_type, current_pos, outstanding );
-			}
-		}
-		scheduleAnimationTask( event_type, end, fps_step + outstanding );
-		scheduleAnimationTask( event_type + AnimationEvent.ANIMATION_COMPLETE_MASK,
-				current_pos, 2 * fps_step + outstanding );
-	}
-	
-	protected void scheduleAnimationTask( final String event_type,
-			final float val, int delay ) {
-		final DocumentObject self = this;
-		this.animation_timer.schedule( new TimerTask() {
-			public void run() {
-				captureEvent( new AnimationEvent<Float>( self, event_type, val ) );
-			}
-		}, delay );
-	}
-	
-	protected void scheduleAnimationTask( final String event_type,
-			final int val, int delay ) {
-		final DocumentObject self = this;
-		this.animation_timer.schedule( new TimerTask() {
-			public void run() {
-				captureEvent( new AnimationEvent<Integer>( self, event_type, val ) );
-			}
-		}, delay );
-	}
-	
-	public void stopAnimation() {
-		if ( this.animation_timer != null ) {
-			this.animation_timer.cancel();
-			this.animation_timer = new Timer();
-		}
-	}
-	
 	protected Boolean intersectMouse( MouseEvent me ) {
-		
-		Boolean res = ( me.getX() > getPosX() && 
-				me.getY() > getPosY() && 
-				me.getX() < ( getPosX() + this.getWidth() ) && 
-				me.getY() < ( getPosY() + getHeight() ) );
+		me = (MouseEvent)modifyEvent( me );
+		Boolean res = ( me.getX() >= 0 && 
+				me.getY() >= 0 && 
+				me.getX() <= this.getWidth() && 
+				me.getY() <= getHeight() );
 		return ( res || intersectAnyChild( me ) );
 	}
 	
-	protected Boolean intersectAnyChild( MouseEvent e ) {
-		MouseEvent translated_event = new MouseEvent( (Component)e.getSource(), e.getID(), e.getWhen(), e.getModifiers(),
-				e.getX() - getPosX(), e.getY() - getPosY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(),
-				e.isPopupTrigger(), e.getButton() );
+	protected AWTEvent modifyEvent( AWTEvent e ) {
+		AWTEvent _e = e;
+		if ( _e instanceof MouseEvent ) {
+			MouseEvent me = (MouseEvent)e;
+			CatchableMouseEvent scaled_event = new CatchableMouseEvent(
+				(Component)me.getSource(),
+				me.getID(),
+				me.getWhen(),
+				me.getModifiers(),
+				Math.round( (float)( me.getX() - getPosX() ) / scale ),
+				Math.round( (float)( me.getY() - getPosY() ) / scale ),
+				me.getXOnScreen(),
+				me.getYOnScreen(),
+				me.getClickCount(),
+				me.isPopupTrigger(),
+				me.getButton()
+			);
+			if ( _e instanceof CatchableMouseEvent ) {
+				if ( ( (CatchableMouseEvent)_e ).isStopped() ) {
+					scaled_event.stopPropagation();
+				}
+			}
+			_e = scaled_event;
+		}
 		
+		return _e;
+	}
+	
+	protected AWTEvent unmodifyEvent( AWTEvent e ) {
+		AWTEvent _e = e;
+		if ( _e instanceof MouseEvent ) {
+			MouseEvent me = (MouseEvent)e;
+			CatchableMouseEvent scaled_event = new CatchableMouseEvent(
+				(Component)me.getSource(),
+				me.getID(),
+				me.getWhen(),
+				me.getModifiers(),
+				Math.round( (float)me.getX() * scale ) + getPosX(),
+				Math.round( (float)me.getY() * scale ) + getPosY(),
+				me.getXOnScreen(),
+				me.getYOnScreen(),
+				me.getClickCount(),
+				me.isPopupTrigger(),
+				me.getButton()
+			);
+			if ( _e instanceof CatchableMouseEvent ) {
+				if ( ( (CatchableMouseEvent)_e ).isStopped() ) {
+					scaled_event.stopPropagation();
+				}
+			}
+			_e = scaled_event;
+		}
+		return _e;
+	}
+	
+	protected Boolean intersectAnyChild( MouseEvent e ) {
 		for ( int i = 0; i < children.size(); ++i ) {
-			if ( children.get( i ).intersectMouse( translated_event ) ) {
+			if ( children.get( i ).intersectMouse( e ) ) {
 				return true;
 			}
 		}
@@ -342,16 +319,9 @@ public class DocumentObject extends Observable implements Observer,
 		}
 	}
 
-	protected int captureEvent( AWTEvent e ) {
+	public int captureEvent( AWTEvent e ) {
 		int captured = -1;
-		AWTEvent _e = e;
-		if ( e instanceof MouseEvent ) {
-			MouseEvent me = (MouseEvent)e;
-			CatchableMouseEvent scaled_event = new CatchableMouseEvent( (Component)me.getSource(), me.getID(), me.getWhen(), me.getModifiers(),
-					Math.round( me.getX() / scale ) - getPosX(), Math.round( me.getY() / scale ) - getPosY(), me.getXOnScreen(), me.getYOnScreen(), me.getClickCount(),
-					me.isPopupTrigger(), me.getButton() );
-			_e = scaled_event;
-		}
+		AWTEvent _e = modifyEvent( e );
 		if ( this.children.size() > 0 ) {
 			for ( DocumentObject child : children ) {
 				if ( child.intersect( _e ) ) {
@@ -366,18 +336,11 @@ public class DocumentObject extends Observable implements Observer,
 		return captured;
 	}
 	
-	protected int bubbleEvent( AWTEvent e ) {
+	public int bubbleEvent( AWTEvent e ) {
 		int bubbled = -1;
 		this.handle( e );
 		if ( this.hasParent()) {
-			AWTEvent _e = e;
-			if ( _e instanceof MouseEvent ) {
-				MouseEvent me = (MouseEvent)e;
-				CatchableMouseEvent scaled_event = new CatchableMouseEvent( (Component)me.getSource(), me.getID(), me.getWhen(), me.getModifiers(),
-						Math.round( me.getX() * scale ) - getPosX(), Math.round( me.getY() * scale ) - getPosY(), me.getXOnScreen(), me.getYOnScreen(), me.getClickCount(),
-						me.isPopupTrigger(), me.getButton() );
-				_e = scaled_event;
-			}
+			AWTEvent _e = unmodifyEvent( e );
 			if ( _e instanceof Catchable ) {
 				if ( ( (Catchable)_e ).isStopped() ) {
 					return bubbled;
