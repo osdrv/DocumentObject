@@ -30,25 +30,27 @@ public void draw() {
   loadPixels();
   
   try {
-    asset( sq1.getPosX() == 10, "Квадрат расположен в точке 10, 10" );
-    asset( sq1.getWidth() == 10, "Квадрат шириной в 10px" );
-    asset( sq1.getHeight() == 10, "Квадрат высотой в 10px" );
+    asset( sq1.getPosX() == 10, "1st square is placed in (10, 10)" );
+    asset( sq1.getWidth() == 10, "Square width is 10px" );
+    asset( sq1.getHeight() == 10, "Square height is 10px" );
     
-    asset( pixelAt( 0, 0 ) == color( 255 ), "Цвет в 0, 0 белый" );
-    asset( pixelAt( width - 1, height - 1 ) == color( 255 ), "Цвет в w, h белый" );
-    asset( pixelAt( 10, 10 ) == color( 0, 255, 0 ), "цвет в 10, 10 зеленый" );
+    asset( pixelAt( 0, 0 ) == color( 255 ), "(0, 0) color is white" );
+    asset( pixelAt( width - 1, height - 1 ) == color( 255 ), "(w, h) color is white" );
+    asset( pixelAt(
+      sq1.getPosX(), sq1.getPosY()
+    ) == color( 0, 255, 0 ), "sq1(0, 0) point color is green" );
     asset( pixelAt(
       Math.round( sq1.getWidth() * sq1.getScale() ) - 1,
       Math.round( sq1.getHeight() * sq1.getScale() ) - 1
-    ) == color( 0, 255, 0 ), "цвет в sq1(w, h) зеленый" );
+    ) == color( 0, 255, 0 ), "sq1(w, h) color is green" );
     asset( pixelAt(
       Math.round( sq1.getPosX() + sq1.getScale() * sq2.getPosX() ),
       Math.round( sq1.getPosY() + sq1.getScale() * sq2.getPosY() )
-    ) == color( 0, 0, 255 ), "цвет в sq2(0, 0) синий" );
+    ) == color( 0, 0, 255 ), "sq2(0, 0) color is blue" );
     asset( pixelAt(
       Math.round( sq1.getPosX() + sq1.getScale() * sq2.getPosX() + sq2.getWidth() * sq1.getScale() * sq2.getScale() - 1 ),
       Math.round( sq1.getPosY() + sq1.getScale() * sq2.getPosY() + sq2.getHeight() * sq1.getScale() * sq2.getScale() - 1 )
-    ) == color( 0, 0, 255 ), "цвет в sq2(w, h) синий" );
+    ) == color( 0, 0, 255 ), "sq2(w, h) color is blue" );
   } catch ( AssetException e ) {
     
   }
