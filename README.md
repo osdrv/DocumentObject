@@ -1,60 +1,59 @@
 # processing document-object model
 
+    import document_object.objects.*;
+    import document_object.animation.*;
     import processing.opengl.*;
-    import document_object.*;
-    
+
     Window window;
-    
+
     void setup() {
-      this.window = new Window( this, 640, 480, P3D );
-      background( 0 );
+      this.window = new Window( this, 320, 320, OPENGL );
       MyDocumentObject o = new MyDocumentObject( this );
       window.appendChild( o );
     }
-    
+
     void draw() {
       background( 0 );
-      window.render();
+      window.draw();
     }
-    
+
     class MyDocumentObject extends DocumentObject {
-    
+
       protected int z_angle = 0;
       protected int x_angle = 0;
-    
+
       public MyDocumentObject( PApplet p ) {
         super( p );
         this.setDim( 100, 100 );
-        this.setPos( 10, 10 );
+        this.setPos( 160, 160 );
       }
-    
-      void render() {
-        final MyDocumentObject d = this;
-        withTranslate( getPosX() + getWidth() / 2, getPosY() + getHeight() / 2, new Runnable() { public void run() {
-          withRotateZ( radians( d.z_angle ), new Runnable() { public void run() {
-            withRotateX( radians( d.x_angle ), new Runnable() { public void run() {
-              getApplet().rect( 
-                -1 * d.getWidth() / 2,
-                -1 * d.getHeight() / 2,
-                d.getWidth() / 2,
-                d.getHeight() / 2
-              );
+
+      protected void withModifiers( Runnable scope_runner ) {
+        final Runnable _scope_runner = scope_runner;
+        final float current_scale = this.scale;
+        withTranslate( getPosX(), getPosY(), new Runnable() { public void run() {
+          withScale( current_scale, new Runnable() { public void run() {
+            withRotateZ( radians( getZAngle() ), new Runnable() { public void run() {
+              withRotateX( radians( getXAngle() ), _scope_runner );
             } } );
           } } );
         } } );
-        super.render();
       }
-    
-      public void setXAngle( int angle ) {
-        this.x_angle = angle;
+
+      protected void render() {
+        rect( 0, 0, getWidth(), getHeight() );
       }
-    
-      public void setZAngle( int angle ) {
-        this.z_angle = angle;
-      }
-    
+
+      public void setXAngle( int angle ) { x_angle = angle; }
+
+      public int getXAngle() { return x_angle; }
+
+      public void setZAngle( int angle ) { z_angle = angle; }
+
+      public int getZAngle() { return z_angle; }
+
       void onMouseClick( CatchableMouseEvent e ) {
-        animation_chain( this.z_angle, this.z_angle + 180, 500, new Lambda<Integer>() {
+        animate( this.z_angle, this.z_angle + 180, 500, new Lambda<Integer>() {
           public void run( Integer angle ) {
             setZAngle( angle );
           }
