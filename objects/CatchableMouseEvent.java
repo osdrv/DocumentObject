@@ -11,6 +11,9 @@ public class CatchableMouseEvent extends MouseEvent implements Catchable {
 		super( (Component)e.getSource(), e.getID(), e.getWhen(), e.getModifiers(),
 				e.getX(), e.getY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(),
 				e.isPopupTrigger(), e.getButton() );
+		if ( e instanceof CatchableMouseEvent )
+			if ( ( (CatchableMouseEvent)e ).isStopped() )
+				stopPropagation();
 	}
 	
 	public CatchableMouseEvent(Component arg0, int arg1, long arg2, int arg3,

@@ -211,57 +211,38 @@ public class DocumentObject extends Observable implements Observer,
 	}
 	
 	protected AWTEvent modifyEvent( AWTEvent e ) {
-		AWTEvent _e = e;
-		if ( _e instanceof MouseEvent ) {
-			MouseEvent me = (MouseEvent)e;
-			CatchableMouseEvent scaled_event = new CatchableMouseEvent(
-				(Component)me.getSource(),
-				me.getID(),
-				me.getWhen(),
-				me.getModifiers(),
-				Math.round( (float)( me.getX() - getPosX() ) / scale ),
-				Math.round( (float)( me.getY() - getPosY() ) / scale ),
-				me.getXOnScreen(),
-				me.getYOnScreen(),
-				me.getClickCount(),
-				me.isPopupTrigger(),
-				me.getButton()
-			);
-			if ( _e instanceof CatchableMouseEvent ) {
-				if ( ( (CatchableMouseEvent)_e ).isStopped() ) {
-					scaled_event.stopPropagation();
-				}
-			}
-			_e = scaled_event;
-		}
-		
-		return _e;
+		return modifyEvent( e, true );
 	}
 	
-	protected AWTEvent unmodifyEvent( AWTEvent e ) {
+	protected AWTEvent modifyEvent( AWTEvent e, Boolean invert ) {
 		AWTEvent _e = e;
 		if ( _e instanceof MouseEvent ) {
-			MouseEvent me = (MouseEvent)e;
-			CatchableMouseEvent scaled_event = new CatchableMouseEvent(
-				(Component)me.getSource(),
-				me.getID(),
-				me.getWhen(),
-				me.getModifiers(),
-				Math.round( (float)me.getX() * scale ) + getPosX(),
-				Math.round( (float)me.getY() * scale ) + getPosY(),
-				me.getXOnScreen(),
-				me.getYOnScreen(),
-				me.getClickCount(),
-				me.isPopupTrigger(),
-				me.getButton()
-			);
-			if ( _e instanceof CatchableMouseEvent ) {
-				if ( ( (CatchableMouseEvent)_e ).isStopped() ) {
-					scaled_event.stopPropagation();
-				}
-			}
-			_e = scaled_event;
+			final CatchableMouseEvent me = new CatchableMouseEvent( (MouseEvent)_e );
+			final PVector original_pos = new PVector( me.getX(), me.getY() );
+			final PMatrix3D m0 = new PMatrix3D();
+			final Boolean f_invert = invert;
+			applet.getMatrix( m0 );
+			withModifiers( new Runnable() { public void run() {
+				PMatrix3D m1 = new PMatrix3D();
+				applet.getMatrix( m1 );
+				PMatrix3D translate_matrix = new PMatrix3D(
+					m1.m00 / m0.m00, m1.m01 - m0.m01, m1.m02 - m0.m02, m1.m03 - m0.m03,
+					m1.m10 - m0.m10, m1.m11 / m0.m11, m1.m12 - m0.m12, m1.m13 - m0.m13,
+					m1.m20 - m0.m20, m1.m21 - m0.m21, m1.m22 / m0.m22, m1.m23 - m0.m23,
+			                      0,               0,               0,               1
+				);
+				if ( f_invert )
+					translate_matrix.invert();
+				PVector translated_pos = new PVector( 0, 0 );
+				translate_matrix.mult( original_pos, translated_pos );
+				me.translatePoint(
+					Math.round( translated_pos.x - original_pos.x ),
+					Math.round( translated_pos.y - original_pos.y )
+				);
+			} } );
+			_e = me;
 		}
+		
 		return _e;
 	}
 	
@@ -333,7 +314,7 @@ public class DocumentObject extends Observable implements Observer,
 		int bubbled = -1;
 		this.handle( e );
 		if ( this.hasParent()) {
-			AWTEvent _e = unmodifyEvent( e );
+			AWTEvent _e = modifyEvent( e, false );
 			if ( _e instanceof Catchable ) {
 				if ( ( (Catchable)_e ).isStopped() ) {
 					return bubbled;
