@@ -24,6 +24,7 @@ void draw() {
   // Here we call for window .draw() method
   // in DocumentObject. Parent node's method
   // will call .draw() method on every child node
+  text( "click the white square!", 100, 20 );
   window.draw();
 }
 
