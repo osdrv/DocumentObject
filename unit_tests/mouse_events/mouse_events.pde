@@ -1,10 +1,8 @@
 import document_object.objects.*;
+import document_object.test.*;
 import document_object.animation.*;
 import processing.opengl.*;
-import java.awt.AWTEvent;
-import java.awt.Component;
 import java.awt.Canvas;
-
 
 TestWindow window;
 SquareObject sq1, sq2, sq3;
@@ -40,7 +38,7 @@ public void draw() {
   background( 255 );
   
   window.draw();
-  loadPixels();
+
   try {
     assetClick();
     background( 0, 255, 0 );
@@ -54,8 +52,8 @@ public void assetClick() throws AssetException {
     sq2.setEventFired( false );
     sq3.setEventFired( false );
     window.fireClickAt( width / 2, height / 2 );
-//    sq2 captures event. so sq1 doesn't handle it
-    asset( sq1.getEventFired() == false, "click doesn't fire on sq1" );
+//    sq1 is a parent of sq2 so it catches click event
+    asset( sq1.getEventFired() == true, "click fires on sq1" );
     asset( sq2.getEventFired() == true, "click fires on sq2" );
     asset( sq3.getEventFired() == false, "click doesn't fire on sq3" );
 }
@@ -87,7 +85,6 @@ class SquareObject extends DocumentObject {
   
   protected void onMouseClick( CatchableMouseEvent me ) {
     setEventFired( true );
-    me.stopPropagation();
   }
 }
 
@@ -99,31 +96,4 @@ public void asset( Boolean expr, String message ) throws AssetException {
 
 public color pixelAt( int pos_x, int pos_y ) {
   return pixels[ width * pos_y + pos_x ];
-}
-
-class TestWindow extends Window {
-  public TestWindow( PApplet p, int width, int height, String mode ) {
-    super( p, width, height, mode );
-  }
-  
-  public void fireClickAt( int pos_x, int pos_y ) {
-    captureEvent( new MouseEvent(
-      new Canvas(),
-      MouseEvent.MOUSE_CLICKED,
-      System.currentTimeMillis() / 1000,
-      0,
-      pos_x,
-      pos_y,
-      1,
-      false
-    ) );
-  }
-}
-
-class AssetException extends Exception {
-  public AssetException( PApplet p, String message ) {
-    super();
-    p.background( 255, 0, 0 );
-    p.println( String.format( "Asset condition failed: %s", message ) );
-  }
 }
