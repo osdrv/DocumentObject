@@ -4,6 +4,7 @@ public class AnimationStep<T> {
 	protected T start;
 	protected T end;
 	protected int duration;
+	protected int mode;
 	protected Lambda<T> handler;
 	
 	public AnimationStep( T start, T end, int duration, Lambda<T> handler ) {
@@ -11,6 +12,15 @@ public class AnimationStep<T> {
 		this.end = end;
 		this.duration = duration;
 		this.handler = handler;
+		this.mode = AnimationChain.EASE_LINEAR;
+	}
+	
+	public AnimationStep( T start, T end, int duration, int mode, Lambda<T> handler ) {
+		this.start = start;
+		this.end = end;
+		this.duration = duration;
+		this.handler = handler;
+		this.mode = mode;
 	}
 	
 	public T getStart() {
@@ -27,5 +37,9 @@ public class AnimationStep<T> {
 	
 	public Lambda<T> getHandler() {
 		return this.handler;
+	}
+	
+	public int getMode() {
+		return this.mode;
 	}
 }
