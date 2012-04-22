@@ -189,26 +189,12 @@ public class DocumentObject extends Observable implements Observer,
 		this.setHeight( height );
 	}
 	
-	public AnimationChain<Integer> animate( int start, int end, int duration, Lambda<Integer> handler ) {
-		AnimationChain<Integer> ac = new AnimationChain<Integer>();
-		ac.queue( start, end, duration, handler );
-		return ac;
+	public AnimationChain animate( float start, float end, int duration, Lambda<Float> handler ) {
+		return animate( start, end, duration, AnimationChain.EASE_LINEAR, handler );
 	}
 	
-	public AnimationChain<Integer> animate( int start, int end, int duration, int mode, Lambda<Integer> handler ) {
-		AnimationChain<Integer> ac = new AnimationChain<Integer>();
-		ac.queue( start, end, duration, mode, handler );
-		return ac;
-	}
-	
-	public AnimationChain<Float> animate( float start, float end, int duration, Lambda<Float> handler ) {
-		AnimationChain<Float> ac = new AnimationChain<Float>();
-		ac.queue( start, end, duration, handler );
-		return ac;
-	}
-	
-	public AnimationChain<Float> animate( float start, float end, int duration, int mode, Lambda<Float> handler ) {
-		AnimationChain<Float> ac = new AnimationChain<Float>();
+	public AnimationChain animate( float start, float end, int duration, int mode, Lambda handler ) {
+		AnimationChain ac = new AnimationChain();
 		ac.queue( start, end, duration, mode, handler );
 		return ac;
 	}

@@ -3,12 +3,14 @@ package document_object.animation;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import document_object.animation.Lambda;
+import document_object.animation.AnimationStep;
 
-public class AnimationChain<T> implements Runnable {
+public class AnimationChain implements Runnable {
 	
-	protected ArrayList<AnimationStep<T>> stack;
+	protected ArrayList<AnimationStep> stack;
 	protected Timer timer = null;
-	protected AnimationChain<T> child = null;
+	protected AnimationChain child = null;
 	protected float fps = (float)60.0;
 	protected Runnable finalizer;
 	
@@ -47,32 +49,31 @@ public class AnimationChain<T> implements Runnable {
 	
 	public static final float STEPS_COUNT = (float) 1000.0;
 	
-	
 	public AnimationChain() {
-		this.stack = new ArrayList<AnimationStep<T>>();
+		this.stack = new ArrayList<AnimationStep>();
 	}
 	
 	public AnimationChain( float fps ) {
-		this.stack = new ArrayList<AnimationStep<T>>();
+		this.stack = new ArrayList<AnimationStep>();
 		this.fps = fps;
 	}
 	
-	public AnimationChain<T> queue( T start, T end, int duration, Lambda<T> handler ) {
+	public AnimationChain queue( float start, float end, int duration, Lambda<Float> handler ) {
 		return this.queue( start, end, duration, EASE_LINEAR, handler );
 	}
 	
-	public AnimationChain<T> queue( T start, T end, int duration, int mode, Lambda<T> handler ) {
-		this.stack.add( new AnimationStep<T>( start, end, duration, mode, handler ) );
+	public AnimationChain queue( float start, float end, int duration, int mode, Lambda<Float> handler ) {
+		this.stack.add( new AnimationStep( start, end, duration, mode, handler ) );
 		return this;
 	}
 	
-	public AnimationChain<T> then( T start, T end, int duration, Lambda<T> handler ) {
+	public AnimationChain then( float start, float end, int duration, Lambda<Float> handler ) {
 		return this.then(start, end, duration, EASE_LINEAR, handler);
 	}
 	
-	public AnimationChain<T> then( T start, T end, int duration, int mode, Lambda<T> handler ) {
+	public AnimationChain then( float start, float end, int duration, int mode, Lambda<Float> handler ) {
 		if ( this.child == null ) {
-			this.child = new AnimationChain<T>();
+			this.child = new AnimationChain();
 			child.queue( start, end, duration, mode, handler );
 		} else {
 			child.then(start, end, duration, mode, handler);
@@ -80,7 +81,7 @@ public class AnimationChain<T> implements Runnable {
 		return this;
 	}
 	
-	public AnimationChain<T> ensure( Runnable handler ) {
+	public AnimationChain ensure( Runnable handler ) {
 		if ( this.child == null ) {
 			this.finalizer = handler;
 		} else {
@@ -101,77 +102,48 @@ public class AnimationChain<T> implements Runnable {
 		
 		for ( int i = 0; i < this.stack.size(); ++i ) {
 			
-			final AnimationStep<T> animation_step = this.stack.get( i );
+			final AnimationStep animation_step = this.stack.get( i );
 			
 			if ( animation_step.getStart() == animation_step.getEnd() ) {
 				continue;
 			}
 			
-			T step;
+			float duration = (float)animation_step.getDuration();
+			float step = (float) ( 1000 / fps );
+			float current = 0;
 			
-			if ( animation_step.getStart() instanceof Integer ) {
-				
-				Integer calculated_step = (int)Math.round(
-						( (float)( (Integer)animation_step.getEnd() - (Integer)animation_step.getStart() ) 
-								/ ( (float)animation_step.getDuration()
-										* fps / STEPS_COUNT ) ) );
-				
-				if ( calculated_step == 0 ) {
-					continue;
-				}
-				
-				step = (T)calculated_step;
-				int current = (Integer)animation_step.getStart();
-				
-				while ( Math.abs( current - (Integer)animation_step.getEnd() ) >= Math.abs( (Integer)step ) ) {
-					current += (Integer)step;
-					final int final_current = current;
-					outstanding += fps_step;
-					this.timer.schedule( new TimerTask() { public void run() {
-						( (Lambda<Integer>)animation_step.getHandler() ).run( final_current );
-					} }, outstanding );
-				}
+			while ( current <= duration ) {
+				final float val = ease( animation_step.getMode(), current,
+						animation_step.getStart(), animation_step.getEnd() - animation_step.getStart(), duration );
 				this.timer.schedule( new TimerTask() { public void run() {
-					( (Lambda<Integer>)animation_step.getHandler() ).run( (Integer)animation_step.getEnd() );
-				} }, outstanding + fps_step );
-			} else {
-				Float calculated_step = (float)(( (Float)animation_step.getEnd() - (Float)animation_step.getStart() )
-						/ ( (float)animation_step.getDuration() * (float)fps / 1000.0 ));
-				step = (T)calculated_step;
-				float current = (Float)animation_step.getStart();
-				while ( Math.abs( current - (Float)animation_step.getEnd() ) >= Math.abs( (Float)step ) ) {
-					current += (Float)step;
-					final float final_current = current;
-					outstanding += fps_step;
-					this.timer.schedule( new TimerTask() {
-						public void run() {
-							( (Lambda<Float>)animation_step.getHandler() ).run( final_current );
-						}
-					}, outstanding );
-				}
+					( (Lambda<Float> )animation_step.getHandler() ).run( val );
+				} }, (long) ( current ) );
+				current += step;
+			}
+			
+			this.timer.schedule( new TimerTask() { public void run() {
+				( (Lambda<Float>)animation_step.getHandler() ).run( animation_step.getEnd() );
+			} }, (long) ( current ) );
+			current += 1;
+			
+			if ( this.finalizer != null ) {
 				this.timer.schedule( new TimerTask() {
 					public void run() {
-						( (Lambda<Float>)animation_step.getHandler() ).run( (Float)animation_step.getEnd() );
+						finalizer.run();
 					}
-				}, outstanding + fps_step );
+				}, (long) ( current ) );
+				current += 1;
+			}
+			
+			if ( this.child != null ) {
+				this.timer.schedule( new TimerTask() {
+					public void run() {
+						child.run();
+					}
+				}, (long) current );
 			}
 		}
-		int sub_step = 2;
-		if ( this.finalizer != null ) {
-			this.timer.schedule( new TimerTask() {
-				public void run() {
-					finalizer.run();
-				}
-			}, outstanding + sub_step * fps_step );
-			++sub_step;
-		}
-		if ( this.child != null ) {
-			this.timer.schedule( new TimerTask() {
-				public void run() {
-					child.run();
-				}
-			}, outstanding + sub_step * fps_step );
-		}
+		
 	}
 	
 	public void cancel() {
@@ -192,10 +164,10 @@ public class AnimationChain<T> implements Runnable {
 			res = (float)( -1 * c * ( t / d ) / ( t / d - 2 ) + b );
 			break;
 		case EASE_IN_OUT_QUAD:
-			if ( t / d/2 < 1 ) {
-				res = (float) (c/2 * Math.pow( t / d/2, 2 ) + b);
+			if ( t < d/2 ) {
+				res = (float) (c/2 * Math.pow( t / (d/2), 2 ) + b);
 			} else {
-				res = -c / 2 * ( ( t / d/2 - 1 ) * ( t / d/2 - 3 ) - 1 )  + b;
+				res = -c / 2 * ( ( t / (d/2) - 1 ) * ( t / (d/2) - 3 ) - 1 )  + b;
 			}
 			break;
 		case EASE_IN_CUBIC:
@@ -205,11 +177,12 @@ public class AnimationChain<T> implements Runnable {
 			res = (float) (c * ( Math.pow( t / d - 1, 3 ) + 1 ) + b);
 			break;
 		case EASE_IN_OUT_CUBIC:
-			if ( t / d/2 < 1 ) {
-				res = (float) (c/2 * Math.pow( t / d/2, 3 ) + b);
+			if ( t < d/2 ) {
+				res = (float) ((c/2) * Math.pow( t / (d/2), 3 ) + b);
 			} else {
-				res = (float) (c/2 * ( Math.pow( t / d/2 - 2, 3 ) + 2 ) + b);
+				res = (float) ((c/2) * ( Math.pow( t / (d/2) - 2, 3 ) + 2 ) + b);
 			}
+			break;
 		case EASE_IN_QUART:
 			res = (float) (c * Math.pow( t / d, 4 ) + b);
 			break;
@@ -217,10 +190,10 @@ public class AnimationChain<T> implements Runnable {
 			res = (float) ( -c * ( Math.pow( t / d - 1, 4 ) - 1 ) + b);
 			break;
 		case EASE_IN_OUT_QUART:
-			if ( t / d/2 < 1 ) {
-				res = (float) ( c/2  * Math.pow( t / d/2, 4 ) ) + b;
+			if ( t < d/2 ) {
+				res = (float) ( c/2  * Math.pow( t / (d/2), 4 ) ) + b;
 			} else {
-				res = (float) ( -c/2 * ( Math.pow( t / d/2 - 2, 4 ) ) ) + b;
+				res = (float) ( -c/2 * ( Math.pow( t / (d/2) - 2, 4 ) - 2 ) ) + b;
 			}
 			break;
 		case EASE_IN_QUINT:
@@ -230,10 +203,10 @@ public class AnimationChain<T> implements Runnable {
 			res = (float) (c * ( Math.pow( t/d - 1, 5 ) + 1 ) + b );
 			break;
 		case EASE_IN_OUT_QUINT:
-			if ( t / d/2 < 1 ) {
-				res = (float) ( c/2 * Math.pow( t / d/2, 5 ) + b );
+			if ( t < d/2 ) {
+				res = (float) ( c/2 * Math.pow( t / (d/2), 5 ) + b );
 			} else {
-				res = (float) ( c/2 * ( Math.pow( t / d/2 - 2, 5 ) + 2 ) + b );
+				res = (float) ( c/2 * ( Math.pow( t / (d/2) - 2, 5 ) + 2 ) + b );
 			}
 			break;
 		case EASE_IN_SINE:
@@ -256,23 +229,23 @@ public class AnimationChain<T> implements Runnable {
 				res = b;
 			} else if ( t == d ) {
 				res = b + c;
-			} else if ( t / d/2 < 1 ) {
-				res = (float) ( c/2 * Math.pow( 2, 10 * (t / d/2 - 1) ) + b );
+			} else if ( t < d/2 ) {
+				res = (float) ( c/2 * Math.pow( 2, 10 * (t / (d/2) - 1) ) + b );
 			} else {
-				res = (float) ( c/2 * ( -Math.pow( 2, -10 * ( t / d/2 - 1 ) ) + 2 ) + b );
+				res = (float) ( c/2 * ( -Math.pow( 2, -10 * ( t / (d/2) - 1 ) ) + 2 ) + b );
 			}
 			break;
 		case EASE_IN_CIRC:
-			res = (float) ( -c * (Math.sqrt(1 - Math.pow( t/d, 2 ) - 1 ) + b ) );
+			res = (float) ( -c * (Math.sqrt(1 - Math.pow( t/d, 2 ) ) - 1 ) + b );
 			break;
 		case EASE_OUT_CIRC:
 			res = (float) ( c * Math.sqrt(1 - Math.pow( t/d - 1, 2 ) ) + b );
 			break;
 		case EASE_IN_OUT_CIRC:
-			if ( t / d/2 < 1 ) {
-				res = (float) ( -c/2 * ( Math.sqrt( 1 - Math.pow( t / d/2, 2 ) ) - 1 ) + b );
+			if ( t < d/2 ) {
+				res = (float) ( -c/2 * ( Math.sqrt( 1 - Math.pow( t / (d/2), 2 ) ) - 1 ) + b );
 			} else {
-				res = (float) ( c/2 * ( Math.sqrt( 1 - Math.pow( t / d/2 - 2, 2 ) ) + 1 ) + b );
+				res = (float) ( c/2 * ( Math.sqrt( 1 - Math.pow( t / (d/2) - 2, 2 ) ) + 1 ) + b );
 			}
 			break;
 		case EASE_IN_ELASTIC:
@@ -329,10 +302,10 @@ public class AnimationChain<T> implements Runnable {
     		} else {
     			s = (float) (p / ( 2 * Math.PI ) * Math.asin( c/a ));
     		}
-    		if ( t / d < 1 ) {
-    			res = (float) (-0.5 * ( a * Math.pow( 2, 10 * ( t/d - 1 ) ) * Math.sin( ( t - s ) * ( 2 * Math.PI ) / p ) ) + b);
+    		if ( t < (d/2) ) {
+    			res = (float) (-0.5 * ( a * Math.pow( 2, 10 * ( t/(d/2) - 1 ) ) * Math.sin( ( 2 * t - s ) * ( 2 * Math.PI ) / p ) ) + b);
     		} else {
-    			res = (float) (a * Math.pow( 2, -10 * ( t/d - 1 ) ) * Math.sin( ( t - s ) * ( 2 * Math.PI ) / p ) * 0.5 + c + b);
+    			res = (float) (a * Math.pow( 2, -10 * ( t/(d/2) - 1 ) ) * Math.sin( ( 2 * t - s ) * ( 2 * Math.PI ) / p ) * 0.5 + c + b);
     		}
     	}
     	break;
@@ -346,12 +319,12 @@ public class AnimationChain<T> implements Runnable {
     	break;
     case EASE_IN_OUT_BACK:
     	s = (float) 1.70158;
-    	if ( t / d/2 < 1 ) {
+    	if ( t < d/2 ) {
     		s *= 1.525;
-    		res = (float) (c / 2 * ( Math.pow( t / d/2, 2 ) * ( ( s + 1 ) * ( t / d/2 ) - s ) ) + b);
+    		res = (float) (c / 2 * ( Math.pow( t / (d/2), 2 ) * ( ( s + 1 ) * ( t / (d/2) ) - s ) ) + b);
     	} else {
     		s *= 1.525;
-    		res = (float) (c / 2 * ( Math.pow( t / d/2 - 2, 2 ) * ( ( s + 1 ) * t / d/2 + s ) + 2 ) + b);
+    		res = (float) (c / 2 * ( Math.pow( t / (d/2) - 2, 2 ) * ( ( s + 1 ) * ( t / (d/2) - 2 ) + s ) + 2 ) + b);
     	}
     	break;
     case EASE_IN_BOUNCE:
@@ -376,7 +349,7 @@ public class AnimationChain<T> implements Runnable {
     	}
     	break;
     default:
-    	res = b + ( c - b ) * t / d; 
+    	res = b + c * t / d;
     	break;
 		}
 		

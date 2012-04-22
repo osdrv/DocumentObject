@@ -1,13 +1,13 @@
 package document_object.animation;
 
-public class AnimationStep<T> {
-	protected T start;
-	protected T end;
+public class AnimationStep {
+	protected float start;
+	protected float end;
 	protected int duration;
 	protected int mode;
-	protected Lambda<T> handler;
+	protected Lambda<Float> handler;
 	
-	public AnimationStep( T start, T end, int duration, Lambda<T> handler ) {
+	public AnimationStep( float start, float end, int duration, Lambda<Float> handler ) {
 		this.start = start;
 		this.end = end;
 		this.duration = duration;
@@ -15,7 +15,7 @@ public class AnimationStep<T> {
 		this.mode = AnimationChain.EASE_LINEAR;
 	}
 	
-	public AnimationStep( T start, T end, int duration, int mode, Lambda<T> handler ) {
+	public AnimationStep( float start, float end, int duration, int mode, Lambda<Float> handler ) {
 		this.start = start;
 		this.end = end;
 		this.duration = duration;
@@ -23,11 +23,11 @@ public class AnimationStep<T> {
 		this.mode = mode;
 	}
 	
-	public T getStart() {
+	public float getStart() {
 		return this.start;
 	}
 	
-	public T getEnd() {
+	public float getEnd() {
 		return this.end;
 	}
 	
@@ -35,7 +35,7 @@ public class AnimationStep<T> {
 		return this.duration;
 	}
 	
-	public Lambda<T> getHandler() {
+	public Lambda<Float> getHandler() {
 		return this.handler;
 	}
 	
